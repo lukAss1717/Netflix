@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px  
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt 
+import plotly.colors as pc
 from wordcloud import WordCloud
 import nltk
 from nltk.corpus import stopwords
@@ -99,11 +100,21 @@ Created by Group 1.
 ''')
 
 # Main Window Row 1 
+
 st.markdown('### :red[KPIs]')
 col1, col2, col3 = st.columns(3)
 col1.metric("Gesamtanzahl",  str(netflix_df.shape[0]) + " " + type_name, change_count, help="Im Vergleich zum Vorjahr")
 col2.metric("Durschnittliche Länge", str(round(netflix_df.duration_t.mean(),2)) + " " + type_measure, change_avg_duration, help="Im Vergleich zum Vorjahr")
-col3.metric("Avg. User Rating", 4.3, "0.5 Sterne", help="Im Vergleich zum Vorjahr")
+
+# Set the percentage value
+percentage_value = 75
+progress_label = f"{percentage_value}%"
+with col3:
+    st.metric("Avg. User Rating", progress_label, help="Daten erhoben von TMDB")
+    progress_bar = st.progress(percentage_value / 100.0)
+    progress_bar.progress(percentage_value / 100.0)
+
+
 
 # bereite die Daten aus dem Dataframe vor für eine geographische Darstellung 
 countries = netflix_df.columns[57:]
@@ -148,13 +159,6 @@ fig.update_layout(
 st.divider()
 st.markdown('### :red[geographische Analyse]')
 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-st.divider()
-# Main window Row 3
-st.markdown ('### :red[Mitwirkende]')
-col1, col2 = st.columns(2)
-col1.metric("erfolgreichster Schauspieler", "Liam Hemsworth")
-col2.metric("erfolgreichster Regisseur", "Steven Spielberg")
-
 
 # Main Window Row 3
 st.divider()
@@ -238,9 +242,9 @@ with c1:
 
     # Sort the dataframe by frequency and take the top 50 words
     top_words = freq_df.sort_values('freq', ascending=False).head(10)
-
+    color_scale = ['#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#8B0000']
     # Create the treemap
-    fig = px.treemap(top_words, path=['word'], values='freq', title='Häufigsten Wörter im Titel',  color_continuous_scale='Reds')
+    fig = px.treemap(top_words, path=['word'], values='freq', title='Häufigsten Wörter im Titel',  color_discrete_sequence=color_scale)
 
     st.plotly_chart(fig, use_container_width=True)
 
@@ -270,3 +274,29 @@ with c2:
         hovermode=False
     )
     st.plotly_chart(wordcloud_fig, use_container_width=True)
+
+st.divider()
+# Main window Row 3
+st.markdown ('### :red[Trend Analyse]')
+col1, col2, col3 = st.columns(3)
+with col1: 
+    st.header("Title")
+    image_url = "https://www.example.com/image.png"
+    st.image(image_url, caption="Example Image")
+with col2: 
+    fig = go.Figure(go.Indicator(
+    mode = "gauge+number",
+    value = 75,
+    title = {'text': "Popularität"},
+    gauge = {
+        'axis': {'range': [None, 100]},
+        'steps' : [
+            {'range': [0, 100], 'color': "#1a1a1a"}],
+        'bar': {'color': "red"}
+    }))
+    st.plotly_chart(fig, use_container_width=True)
+with col3: 
+    st.metric("Regisseur", "Steven Spielberg")
+    with st.expander("Weitere Mitwirkende"):
+        st.metric("Schauspieler", "Brad Pitt")
+

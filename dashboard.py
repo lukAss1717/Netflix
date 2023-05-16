@@ -4,13 +4,12 @@ import numpy as np
 import plotly.express as px  
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt 
-import plotly.colors as pc
 from wordcloud import WordCloud
 import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 #loading in the data 
-df = pd.read_csv('netflix.csv', parse_dates=['date_added'], delimiter='\t')
+df = pd.read_csv('prepared_netflix.csv', parse_dates=['date_added'], delimiter='\t')
 netflix_df = df
 
 #sets the global settings for fullscreen and the default layout for the sidebar when webapp is loaded
@@ -33,7 +32,7 @@ type_selected = st.sidebar.radio(
 #update dataframe
 netflix_df = netflix_df[netflix_df["type"] == type_selected]
 #getting the genre list based on state of list
-genre_only = netflix_df.iloc[:,13:55]
+genre_only = netflix_df.iloc[:,217:]
 genre_list = genre_only.columns[(genre_only != 0).any()]
 
 st.sidebar.subheader('Genre')
@@ -107,7 +106,7 @@ col1.metric("Gesamtanzahl",  str(netflix_df.shape[0]) + " " + type_name, change_
 col2.metric("Durschnittliche Länge", str(round(netflix_df.duration_t.mean(),2)) + " " + type_measure, change_avg_duration, help="Im Vergleich zum Vorjahr")
 
 # Set the percentage value
-percentage_value = 75
+percentage_value = round(netflix_df['vote_average'].mean() * 10,2)
 progress_label = f"{percentage_value}%"
 with col3:
     st.metric("Avg. User Rating", progress_label, help="Daten erhoben von TMDB")
@@ -117,7 +116,7 @@ with col3:
 
 
 # bereite die Daten aus dem Dataframe vor für eine geographische Darstellung 
-countries = netflix_df.columns[57:]
+countries = netflix_df.columns[20:216]
 geo = netflix_df[countries].sum().to_frame() 
 geo_df = geo.rename(columns={0: 'Produktionen'})
 fig = px.choropleth(
@@ -280,11 +279,17 @@ with c2:
 st.divider()
 # Main window Row 3
 st.markdown ('### :red[Trend Analyse]')
+netflix_df = netflix_df.reset_index()
+most_pop_title = netflix_df.iloc[netflix_df['popularity'].idxmax()]['title']
+most_pop_cover = netflix_df.iloc[netflix_df['popularity'].idxmax()]['poster_path']
+most_pop_pop = netflix_df.iloc[netflix_df['popularity'].idxmax()]['popularity']
+most_pop_director = netflix_df.iloc[netflix_df['popularity'].idxmax()]['director']
+most_pop_cast = netflix_df.iloc[netflix_df['popularity'].idxmax()]['cast'].split(',')
 col1, col2, col3 = st.columns((2,4,4))
 with col1: 
     fig = go.Figure(go.Indicator(
     mode = "gauge+number",
-    value = 75,
+    value = most_pop_pop,
     gauge = {
         'axis': {'range': [None, 100]},
         'steps' : [
@@ -295,14 +300,18 @@ with col1:
     margin=dict(l=20, r=20, t=50, b=20),  # Add margins for spacing
     title=dict(text="Popularität", x=0.5, y=0.9, font=dict(size=20, color="#FFFFFF"), xanchor="center"),  # Set the title properties
 )
-with col2: 
-    st.markdown('## Title')
-    image_url = "https://www.example.com/image.png"
-    st.image(image_url, caption="Example Image")
-
     st.plotly_chart(fig, use_container_width=True)
+with col2: 
+    sub_col1, sub_col2, sub_col3 = st.columns(3)
+    with sub_col1: 
+        st.markdown(f'## {most_pop_title}')
+    with sub_col2: 
+        image_url = "https://image.tmdb.org/t/p/original/" + most_pop_cover
+        st.image(image_url, caption=f"{type_name[:-1]} Cover ", width=250)
+
 with col3: 
-    st.metric("Regisseur", "Steven Spielberg")
+    st.metric("Regisseur", most_pop_director)
     with st.expander("Weitere Mitwirkende"):
-        st.metric("Schauspieler", "Brad Pitt")
+        for i in most_pop_cast: 
+            st.metric("Schauspieler", i)
 

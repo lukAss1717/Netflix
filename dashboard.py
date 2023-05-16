@@ -158,6 +158,7 @@ fig.update_layout(
 )
 st.divider()
 st.markdown('### :red[geographische Analyse]')
+fig.update_layout(title_font_size=20)
 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 # Main Window Row 3
@@ -245,7 +246,7 @@ with c1:
     color_scale = ['#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#8B0000']
     # Create the treemap
     fig = px.treemap(top_words, path=['word'], values='freq', title='Häufigsten Wörter im Titel',  color_discrete_sequence=color_scale)
-
+    fig.update_layout(title_font_size=20)
     st.plotly_chart(fig, use_container_width=True)
 
 # Display the tre
@@ -260,6 +261,7 @@ with c2:
     # Convert the wordcloud to a Plotly figure
     wordcloud_fig = px.imshow(wordcloud.to_array(), color_continuous_scale='Reds', title='Häufigsten Wörter in der Beschreibung')
     wordcloud_fig.update_layout(
+        title_font_size=20,
         xaxis=dict(
             showticklabels=False,
             showgrid=False,
@@ -278,22 +280,26 @@ with c2:
 st.divider()
 # Main window Row 3
 st.markdown ('### :red[Trend Analyse]')
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns((2,4,4))
 with col1: 
-    st.header("Title")
-    image_url = "https://www.example.com/image.png"
-    st.image(image_url, caption="Example Image")
-with col2: 
     fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = 75,
-    title = {'text': "Popularität"},
     gauge = {
         'axis': {'range': [None, 100]},
         'steps' : [
             {'range': [0, 100], 'color': "#1a1a1a"}],
         'bar': {'color': "red"}
     }))
+    fig.update_layout(
+    margin=dict(l=20, r=20, t=50, b=20),  # Add margins for spacing
+    title=dict(text="Popularität", x=0.5, y=0.9, font=dict(size=20, color="#FFFFFF"), xanchor="center"),  # Set the title properties
+)
+with col2: 
+    st.markdown('## Title')
+    image_url = "https://www.example.com/image.png"
+    st.image(image_url, caption="Example Image")
+
     st.plotly_chart(fig, use_container_width=True)
 with col3: 
     st.metric("Regisseur", "Steven Spielberg")

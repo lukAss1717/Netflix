@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import nltk
 from nltk.corpus import stopwords
+import math
 nltk.download('stopwords')
 #loading in the data 
 df = pd.read_csv('prepared_netflix.csv', parse_dates=['date_added'], delimiter='\t')
 netflix_df = df
-
+most_pop_pop_general = netflix_df.iloc[netflix_df['popularity'].idxmax()]['popularity']
 #sets the global settings for fullscreen and the default layout for the sidebar when webapp is loaded
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
@@ -95,7 +96,8 @@ change_avg_duration = str(round((netflix_df.duration_t.mean() - last_year_df.dur
 
 st.sidebar.markdown('''
 ---
-Created by Group 1.
+🛠️ Created by Group 1. \n
+📅 Datenzustand: 2021-09-25
 ''')
 
 # Main Window Row 1 
@@ -225,7 +227,7 @@ st.markdown('### :red[inhaltiche Analyse]')
 c1, c2 = st.columns((5, 5))
 with c1: 
 
-    text = ' '.join(netflix_df['title'].dropna().values)
+    text = ' '.join(netflix_df['netflix_title'].dropna().values)
     # Remove stopwords
     stop_words = set(stopwords.words('english'))
     stop_words.update("&","-")
@@ -278,40 +280,61 @@ with c2:
 
 st.divider()
 # Main window Row 3
-st.markdown ('### :red[Trend Analyse]')
+st.markdown (f"### :red[Populärster {type_name[:-1]}]")
 netflix_df = netflix_df.reset_index()
-most_pop_title = netflix_df.iloc[netflix_df['popularity'].idxmax()]['title']
+most_pop_title = netflix_df.iloc[netflix_df['popularity'].idxmax()]['netflix_title']
 most_pop_cover = netflix_df.iloc[netflix_df['popularity'].idxmax()]['poster_path']
 most_pop_pop = netflix_df.iloc[netflix_df['popularity'].idxmax()]['popularity']
+avg_pop = netflix_df['popularity'].mean()
 most_pop_director = netflix_df.iloc[netflix_df['popularity'].idxmax()]['director']
-most_pop_cast = netflix_df.iloc[netflix_df['popularity'].idxmax()]['cast'].split(',')
-col1, col2, col3 = st.columns((2,4,4))
-with col1: 
+most_pop_cast = list() 
+if isinstance(netflix_df.iloc[netflix_df['popularity'].idxmax()]['cast'], str): 
+    most_pop_cast = netflix_df.iloc[netflix_df['popularity'].idxmax()]['cast'].split(',')
+
+col1, col2, col3 = st.columns((2,4,2))
+with col3: 
     fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = most_pop_pop,
     gauge = {
-        'axis': {'range': [None, 100]},
+        'axis': {'range': [None, most_pop_pop_general]},
         'steps' : [
             {'range': [0, 100], 'color': "#1a1a1a"}],
+        'threshold' : {'line': {'color': "white", 'width': 4}, 'thickness': 0.75, 'value': avg_pop},
         'bar': {'color': "red"}
     }))
     fig.update_layout(
     margin=dict(l=20, r=20, t=50, b=20),  # Add margins for spacing
-    title=dict(text="Popularität", x=0.5, y=0.9, font=dict(size=20, color="#FFFFFF"), xanchor="center"),  # Set the title properties
+    title=dict(text="Popularity Score", x=0.5, y=0.9, font=dict(size=20, color="#FFFFFF"), xanchor="center"),  # Set the title properties
 )
     st.plotly_chart(fig, use_container_width=True)
-with col2: 
+with col1: 
     sub_col1, sub_col2, sub_col3 = st.columns(3)
-    with sub_col1: 
-        st.markdown(f'## {most_pop_title}')
-    with sub_col2: 
-        image_url = "https://image.tmdb.org/t/p/original/" + most_pop_cover
-        st.image(image_url, caption=f"{type_name[:-1]} Cover ", width=250)
+    st.markdown(f'## {most_pop_title}')
 
-with col3: 
+    image_url = "https://image.tmdb.org/t/p/original/" + most_pop_cover
+    st.image(image_url, caption=f"{type_name[:-1]} Cover ", width=250)
+
+with col2: 
+    st.markdown ("### :red[Produziert von]")
     st.metric("Regisseur", most_pop_director)
-    with st.expander("Weitere Mitwirkende"):
-        for i in most_pop_cast: 
-            st.metric("Schauspieler", i)
+    st.markdown ("### :red[Cast]",unsafe_allow_html=True)
+    if most_pop_cast: 
+        for count, person in enumerate(most_pop_cast): 
+            st.metric("Schauspieler", person)
+            if count >= 2: 
+                with st.expander("Weitere Mitwirkende"):
+                    for i in most_pop_cast[3:]: 
+                        st.metric("Schauspieler", i)
+                break 
+            else: 
+                continue
+    else: 
+        st.markdown ("#### keine Daten vorhanden 🥹")
 
+hide_streamlit_style = """<style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
